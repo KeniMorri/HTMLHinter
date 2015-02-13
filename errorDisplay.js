@@ -10,15 +10,15 @@ define(function (require, exports, module) {
 		widgetsErrors  = [],
 		gutters        = [];
 
-		ExtensionUtils.loadStyleSheet(module, "main.less");
-		require("tooltipsy.source");
+	ExtensionUtils.loadStyleSheet(module, "main.less");
+	require("tooltipsy.source");
 	
 	//Function that highlights the line(s) with errors
 	function markErrors(lineStart, lineEnd, charStart, charEnd) {
 		var editor   = EditorManager.getFocusedEditor();
 		var allMarks = editor._codeMirror.getAllMarks();
 
-		if(!allMarks.length){
+		if(!allMarks.length) {
 			editor._codeMirror.markText({line: lineStart, ch: charStart},
 				{line: lineEnd, ch: charEnd},
 				{className: "errorHighlight"});

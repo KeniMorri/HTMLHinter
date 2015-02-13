@@ -6,6 +6,7 @@
 //Index 5 returns the output of the error
 
 define(function(require){
+    "use strict";
     function parser(input) {
         var parse = require("slowparse/slowparse");
         var result = parse.HTML(document, input);
@@ -228,13 +229,13 @@ define(function(require){
                 msg[1] = obj.openTag.start;
                 msg[2] = obj.openTag.end;
             }
-	        for(var i = msg[1]; i <= msg[2]; i++){
-	            output += input[i];
-	        }
-	        msg[5] = output;
+            for(var i = msg[1]; i <= msg[2]; i++){
+                output += input[i];
+            }
+            msg[5] = output;
 
             //Finds the line number for the start of the error
-            for(var i = 0; i <= (msg[1] + 1); i++)
+            for(i = 0; i <= (msg[1] + 1); i++)
             {
                 if(input[i] === "\n")
                 {
@@ -248,7 +249,7 @@ define(function(require){
             msg[3] = lineCount;
 
             ////Finds the line number for the end of the error
-            for(var i = (msg[1] + 1); i <= (msg[2] + 1); i++)
+            for(i = (msg[1] + 1); i <= (msg[2] + 1); i++)
             {
                 if(input[i] === "\n")
                 {
@@ -259,13 +260,13 @@ define(function(require){
                 charCount++;
             }
             //character relative to start of the line
-            msg[1] = msg[1] - lineBeginStart
+            msg[1] = msg[1] - lineBeginStart;
             msg[2] = msg[2] - lineBeginEnd;
             
             //line number for end of error
             msg[4] = lineCount;
         }
-       return msg;
+        return msg;
     }
 
     return parser;

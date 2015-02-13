@@ -17,7 +17,7 @@ define(function (require, exports, module) {
         lastErrorIndex      = -1,
         BottomDisplayVar;
 
-        ExtensionUtils.loadStyleSheet(module, "main.less");   
+    ExtensionUtils.loadStyleSheet(module, "main.less");   
     
     function main(){
         var editor = EditorManager.getFocusedEditor();
@@ -30,10 +30,10 @@ define(function (require, exports, module) {
                 if(lastErrorIndex !== -1 && lastErrorIndex !== (result[3] - 1)){
                     clearAllErrors();
                 }
-                    MarkErrors.showGutter(result[3] - 1);
-                    MarkErrors.markErrors(result[3] - 1, result[4] - 1, result[1], result[2]);
-                    lastErrorIndex = (result[3] - 1);
-                    results.push(result);
+                MarkErrors.showGutter(result[3] - 1);
+                MarkErrors.markErrors(result[3] - 1, result[4] - 1, result[1], result[2]);
+                lastErrorIndex = (result[3] - 1);
+                results.push(result);
             }else{
                 clearAllErrors();
             }
