@@ -100,6 +100,6 @@ define(function (require, exports, module) {
     
     AppInit.appReady(function(){
         BottomDisplayVar = new BottomDisplay();
-        $(EditorManager).on("activeEditorChange", activeEditorChangeHandler);
+        EditorManager.on("activeEditorChange", activeEditorChangeHandler);
     });
 });

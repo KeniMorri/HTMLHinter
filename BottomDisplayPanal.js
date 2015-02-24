@@ -5,7 +5,6 @@ define(function (require) {
     var BottomHTML = require('text!BottomDisplay.html');
     function BottomDisplay()
     {
-        console.log('Bottom display Construtor');
         var that = this;
         WorkspaceManager.createBottomPanel('Bottom.panel', $(BottomHTML));
         this._panel = $('#bottom-panel-gui');
@@ -29,7 +28,6 @@ define(function (require) {
     };
     BottomDisplay.prototype._onClose = function ()
     {
-        console.log("Close");
         Resizer.hide(this._panel);
     };
     return BottomDisplay;
