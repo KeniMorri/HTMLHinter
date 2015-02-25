@@ -103,3 +103,4 @@ define(function (require, exports, module) {
         EditorManager.on("activeEditorChange", activeEditorChangeHandler);
     });
 });
+
