@@ -3,7 +3,7 @@
 
 define(function (require, exports, module) {
 	"use strict";
-	
+
 	var EditorManager  = brackets.getModule("editor/EditorManager"),
 		ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
 		lineWidgetHTML = require("text!inlineWidget.html"),
@@ -12,7 +12,7 @@ define(function (require, exports, module) {
 
 	ExtensionUtils.loadStyleSheet(module, "main.less");
 	require("tooltipsy.source");
-	
+
 	//Function that highlights the line(s) with errors
 	function markErrors(lineStart, lineEnd, charStart, charEnd) {
 		var editor   = EditorManager.getFocusedEditor();
@@ -24,7 +24,7 @@ define(function (require, exports, module) {
 				{className: "errorHighlight"});
 		}
 	}
-	
+
 	//Function that clears all the highlighted lines
 	function clearErrors(){
 		var editor   = EditorManager.getFocusedEditor();
@@ -36,7 +36,7 @@ define(function (require, exports, module) {
 			});
 		}
 	}
-	
+
 	//Function that creates a widget under the line where the error
 	//is located and displays the error message.
 	function showWidget(errorText, lineStart){
@@ -49,10 +49,10 @@ define(function (require, exports, module) {
             var text = Mustache.render(lineWidgetHTML, { "error": errorText });
             htmlNode.innerHTML = text;
 
-        
+
 			var errrorWidget = editor._codeMirror.addLineWidget(lineStart, htmlNode,
 				{coverGutter: false, noHScroll: false, above: false, showIfHidden: false});
-			
+
 			widgetsErrors.push(errrorWidget);
 		}
 	}
@@ -84,7 +84,7 @@ define(function (require, exports, module) {
 
 			editor._codeMirror.setOption("gutters", foundGutters);
 			//Show tooltips message
-			$(".CodeMirror-linenumbers").tooltipsy({content : "Click button for information"}); 
+			$(".CodeMirror-linenumbers").tooltipsy({content : "Click button for information"});
 
 			$(".CodeMirror-gutter").addClass("gutterCursor");
 		}
@@ -95,12 +95,17 @@ define(function (require, exports, module) {
 		var editor = EditorManager.getFocusedEditor();
 		gutters = [];
 		editor._codeMirror.clearGutter("errorButton");
+
 		//Destroy tooltips instance
-		$(".CodeMirror-linenumbers").data("tooltipsy").destroy();
+		var tooltips = $(".CodeMirror-linenumbers").data("tooltipsy");
+		if(tooltips) {
+			tooltips.destroy();
+		}
+
 		//Changes cursor back to default
 		$(".CodeMirror-gutter").removeClass("gutterCursor");
 	}
-	
+
 	exports.markErrors = markErrors;
 	exports.clearErrors = clearErrors;
 	exports.showWidget = showWidget;

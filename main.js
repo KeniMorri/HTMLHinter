@@ -17,15 +17,15 @@ define(function (require, exports, module) {
         lastErrorIndex      = -1,
         BottomDisplayVar;
 
-    ExtensionUtils.loadStyleSheet(module, "main.less");   
-    
+    ExtensionUtils.loadStyleSheet(module, "main.less");
+
     function main(){
         var editor = EditorManager.getFocusedEditor();
 
         if(editor && editor.document.getLanguage()._name === "HTML"){
             var text   = editor.document.getText();
             var result = parser(text);
-            
+console.log("result:", result, "\nText: ", text);
             if(result.length > 0){
                 if(lastErrorIndex !== -1 && lastErrorIndex !== (result[3] - 1)){
                     clearAllErrors();
@@ -43,18 +43,20 @@ define(function (require, exports, module) {
 
     //Function that clears all errors
     var clearAllErrors = function(){
+        console.log("Clearing all errors");
         MarkErrors.clearErrors();
         MarkErrors.removeGutter();
         MarkErrors.removeWidget();
         results = [];
         lastErrorIndex = -1;
+        console.log("CLeared all errors");
     };
 
     var toggleErrors = function(editor, line){
         if(results.length > 0 && !showingErrors && line === results[0][3] - 1){
             results.forEach(function (result) {
                 MarkErrors.showWidget(result[0], result[3] - 1);
-                showingErrors = true;     
+                showingErrors = true;
             });
         }else if(results.length > 0 && showingErrors && line === results[0][3] - 1){
             MarkErrors.removeWidget();
@@ -80,11 +82,11 @@ define(function (require, exports, module) {
 
         if (focusedEditor) {
             focusedEditor._codeMirror.on("gutterClick", toggleErrors);
-            focusedEditor._codeMirror.on("change", documentChanged);           
+            focusedEditor._codeMirror.on("change", documentChanged);
         }
 
     };
-    
+
     //Function that shows panel
     function showpan() {
         BottomDisplayVar.panelRender(true);
@@ -97,10 +99,14 @@ define(function (require, exports, module) {
     // The label of the menu item is the name we gave the command (see above)
     var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
     menu.addMenuItem(MY_COMMAND_ID,  "Ctrl-Alt-U");
-    
+
     AppInit.appReady(function(){
         BottomDisplayVar = new BottomDisplay();
         EditorManager.on("activeEditorChange", activeEditorChangeHandler);
+
+        var currentEditor = EditorManager.getActiveEditor();
+        currentEditor._codeMirror.on("change", documentChanged);
+        currentEditor._codeMirror.on("gutterClick", toggleErrors);
     });
 });
 
