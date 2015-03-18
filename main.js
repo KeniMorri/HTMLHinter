@@ -4,66 +4,64 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var CommandManager      = brackets.getModule("command/CommandManager"),
-        Menus               = brackets.getModule("command/Menus"),
-        AppInit             = brackets.getModule("utils/AppInit"),
-        EditorManager       = brackets.getModule("editor/EditorManager"),
-        ExtensionUtils      = brackets.getModule("utils/ExtensionUtils"),
-        BottomDisplay       = require("BottomDisplayPanal"),
-        MarkErrors          = require("errorDisplay"),
-        parser              = require("parser"),
-        results             = [],
-        showingErrors       = false,
-        lastErrorIndex      = -1,
-        BottomDisplayVar;
+    var CommandManager        = brackets.getModule("command/CommandManager"),
+        Menus                 = brackets.getModule("command/Menus"),
+        AppInit               = brackets.getModule("utils/AppInit"),
+        EditorManager         = brackets.getModule("editor/EditorManager"),
+        ExtensionUtils        = brackets.getModule("utils/ExtensionUtils"),
+        BottomDisplay         = require("BottomDisplayPanal"),
+        MarkErrors            = require("errorDisplay"),
+        parse                 = require("./parser"),
+        showingDescription,
+        BottomDisplayVar,
+        errorCache = {};
 
     ExtensionUtils.loadStyleSheet(module, "main.less");
 
     function main(){
-        var editor = EditorManager.getFocusedEditor();
+        var editor = EditorManager.getActiveEditor();
+        var error;
+        var html;
 
-        if(editor && editor.document.getLanguage()._name === "HTML"){
-            var text   = editor.document.getText();
-            var result = parser(text);
-console.log("result:", result, "\nText: ", text);
-            if(result.length > 0){
-                if(lastErrorIndex !== -1 && lastErrorIndex !== (result[3] - 1)){
-                    clearAllErrors();
-                }
-                MarkErrors.showGutter(result[3] - 1);
-                MarkErrors.markErrors(result[3] - 1, result[4] - 1, result[1], result[2]);
-                lastErrorIndex = (result[3] - 1);
-                results.push(result);
-            }else{
-                clearAllErrors();
-            }
-            BottomDisplayVar.update(text);
+        if(!editor || editor.document.getLanguage().getName() !== "HTML") {
+            return;
         }
+
+        html = editor.document.getText();
+        error = parse(html);
+
+        if(error) {
+            errorCache.message = error.message;
+            errorCache.line = editor._codeMirror.getDoc().posFromIndex(error.cursor).line;
+            MarkErrors.showButton(errorCache.line);
+            MarkErrors.highlight(errorCache.line);
+        } else {
+            clearAllErrors();
+        }
+
+        BottomDisplayVar.update(html);
     }
 
     //Function that clears all errors
-    var clearAllErrors = function(){
-        console.log("Clearing all errors");
-        MarkErrors.clearErrors();
-        MarkErrors.removeGutter();
-        MarkErrors.removeWidget();
-        results = [];
-        lastErrorIndex = -1;
-        console.log("CLeared all errors");
-    };
+    function clearAllErrors(){
+        MarkErrors.removeHighlight(errorCache.line);
+        errorCache = {};
+        MarkErrors.removeButton();
+        MarkErrors.hideDescription();
+    }
 
-    var toggleErrors = function(editor, line){
-        if(results.length > 0 && !showingErrors && line === results[0][3] - 1){
-            results.forEach(function (result) {
-                MarkErrors.showWidget(result[0], result[3] - 1);
-                showingErrors = true;
-            });
-        }else if(results.length > 0 && showingErrors && line === results[0][3] - 1){
-            MarkErrors.removeWidget();
-            showingErrors = false;
-        }else{
-            main();
+    var toggleErrorDescription = function(editor, line){
+        if(errorCache.line !== line) {
+            return;
         }
+
+        if(!showingDescription) {
+            MarkErrors.showDescription(errorCache);
+        } else {
+            MarkErrors.hideDescription();
+        }
+
+        showingDescription = !showingDescription;
     };
 
     //Document changed event handler
@@ -76,12 +74,12 @@ console.log("result:", result, "\nText: ", text);
     //Switching editors
     var activeEditorChangeHandler = function ($event, focusedEditor, lostEditor) {
         if (lostEditor) {
-            lostEditor._codeMirror.off("gutterClick", toggleErrors);
+            lostEditor._codeMirror.off("gutterClick", toggleErrorDescription);
             lostEditor._codeMirror.off("change", documentChanged);
         }
 
         if (focusedEditor) {
-            focusedEditor._codeMirror.on("gutterClick", toggleErrors);
+            focusedEditor._codeMirror.on("gutterClick", toggleErrorDescription);
             focusedEditor._codeMirror.on("change", documentChanged);
         }
 
@@ -105,8 +103,9 @@ console.log("result:", result, "\nText: ", text);
         EditorManager.on("activeEditorChange", activeEditorChangeHandler);
 
         var currentEditor = EditorManager.getActiveEditor();
+        MarkErrors.initGutter();
         currentEditor._codeMirror.on("change", documentChanged);
-        currentEditor._codeMirror.on("gutterClick", toggleErrors);
+        currentEditor._codeMirror.on("gutterClick", toggleErrorDescription);
     });
 });
 

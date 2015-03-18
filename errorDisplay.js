@@ -2,114 +2,90 @@
 /*global define, brackets, $, document, Mustache*/
 
 define(function (require, exports, module) {
-	"use strict";
+    "use strict";
 
-	var EditorManager  = brackets.getModule("editor/EditorManager"),
-		ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
-		lineWidgetHTML = require("text!inlineWidget.html"),
-		widgetsErrors  = [],
-		gutters        = [];
+    var EditorManager  = brackets.getModule("editor/EditorManager"),
+        ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
+        lineWidgetHTML = require("text!inlineWidget.html"),
+        currentErrorWidget;
 
-	ExtensionUtils.loadStyleSheet(module, "main.less");
-	require("tooltipsy.source");
+    ExtensionUtils.loadStyleSheet(module, "main.less");
+    require("tooltipsy.source");
 
-	//Function that highlights the line(s) with errors
-	function markErrors(lineStart, lineEnd, charStart, charEnd) {
-		var editor   = EditorManager.getFocusedEditor();
-		var allMarks = editor._codeMirror.getAllMarks();
+    function getActiveEditor() {
+        return EditorManager.getActiveEditor();
+    }
 
-		if(!allMarks.length) {
-			editor._codeMirror.markText({line: lineStart, ch: charStart},
-				{line: lineEnd, ch: charEnd},
-				{className: "errorHighlight"});
-		}
-	}
+    function getCodeMirror() {
+        return getActiveEditor()._codeMirror;
+    }
 
-	//Function that clears all the highlighted lines
-	function clearErrors(){
-		var editor   = EditorManager.getFocusedEditor();
-		var allMarks = editor._codeMirror.getAllMarks();
+    function initGutter() {
+        getCodeMirror().setOption("gutters", ["errors"]);
+    }
 
-		if(allMarks.length > 0){
-			allMarks.forEach(function(element){
-				element.clear();
-			});
-		}
-	}
+    function highlight(line) {
+        if(!line) {
+           return;
+        }
 
-	//Function that creates a widget under the line where the error
-	//is located and displays the error message.
-	function showWidget(errorText, lineStart){
-		var editor    = EditorManager.getActiveEditor();
-		var lineStats = editor._codeMirror.lineInfo(lineStart);
+        getCodeMirror().getDoc().addLineClass(line, "background", "errorHighlight");
+    }
 
-		if(!lineStats.widgets && widgetsErrors.length === 0){
-            var htmlNode = document.createElement("div");
-            htmlNode.className = "errorPanel";
-            var text = Mustache.render(lineWidgetHTML, { "error": errorText });
-            htmlNode.innerHTML = text;
+    function removeHighlight(line) {
+        if(!line) {
+           return;
+        }
 
+        getCodeMirror().getDoc().removeLineClass(line, "background", "errorHighlight");
+    }
 
-			var errrorWidget = editor._codeMirror.addLineWidget(lineStart, htmlNode,
-				{coverGutter: false, noHScroll: false, above: false, showIfHidden: false});
+    //Function that adds a button on the gutter (on given line nubmer) next to the line numbers
+    function showButton(line){
+        var errorMarker = document.createElement("div");
+        errorMarker.className = "errorButton errorText";
+        errorMarker.innerHTML = "!";
 
-			widgetsErrors.push(errrorWidget);
-		}
-	}
+        getCodeMirror().setGutterMarker(line, "errors", errorMarker);
 
-	//Function that removes the line widget (errors)
-	function removeWidget(){
-		//Remove displayed error messages
-		widgetsErrors.forEach(function (lineWidget) {
-			if (lineWidget) {
-				lineWidget.clear();
-			}
-		});
-		widgetsErrors = [];
-	}
+        //Show tooltips message
+        $(".errors").tooltipsy({content : "Click error icon for details", alignTo: "cursor", offset: [10, -10]});
+    }
 
-	//Function that adds a button on the gutter (on given line nubmer) next to the line numbers
-	function showGutter(lineStart){
-		if(gutters.length === 0){
-			var editor = EditorManager.getFocusedEditor();
-			var $errorDiv = $("<div class='error'/>");
-			var $errorMarker = $("<span class='errorButton'/>");
-			var foundGutters = ["errorButton"];
+    // Function that removes gutter button
+    function removeButton(){
+        getCodeMirror().clearGutter("errors");
 
-			$errorDiv.append($errorMarker);
-			$errorMarker.addClass("errorText");
-			$errorMarker.text("!");
+        //Destroy tooltips instance
+        var tooltips = $(".errors").data("tooltipsy");
+        if(tooltips) {
+           tooltips.destroy();
+        }
+    }
 
-			gutters.push(editor._codeMirror.setGutterMarker(lineStart, "errorButton", $errorDiv[0]));
+    function showDescription(error) {
+        var description = document.createElement("div");
+        description.className = "errorPanel";
+        description.innerHTML = Mustache.render(lineWidgetHTML, {"error": error.message});
+        var options = {coverGutter: false, noHScroll: false, above: false, showIfHidden: false};
 
-			editor._codeMirror.setOption("gutters", foundGutters);
-			//Show tooltips message
-			$(".CodeMirror-linenumbers").tooltipsy({content : "Click button for information"});
+        currentErrorWidget = getCodeMirror().addLineWidget(error.line, description, options);
+    }
 
-			$(".CodeMirror-gutter").addClass("gutterCursor");
-		}
-	}
+    function hideDescription() {
+        if(!currentErrorWidget) {
+            return;
+        }
 
-	//Function that removes gutter button
-	function removeGutter(){
-		var editor = EditorManager.getFocusedEditor();
-		gutters = [];
-		editor._codeMirror.clearGutter("errorButton");
+        currentErrorWidget.clear();
+        currentErrorWidget = null;
+    }
 
-		//Destroy tooltips instance
-		var tooltips = $(".CodeMirror-linenumbers").data("tooltipsy");
-		if(tooltips) {
-			tooltips.destroy();
-		}
-
-		//Changes cursor back to default
-		$(".CodeMirror-gutter").removeClass("gutterCursor");
-	}
-
-	exports.markErrors = markErrors;
-	exports.clearErrors = clearErrors;
-	exports.showWidget = showWidget;
-	exports.showGutter = showGutter;
-	exports.removeGutter = removeGutter;
-	exports.removeWidget = removeWidget;
+    exports.initGutter = initGutter;
+    exports.showButton = showButton;
+    exports.removeButton = removeButton;
+    exports.highlight = highlight;
+    exports.removeHighlight = removeHighlight;
+    exports.showDescription = showDescription;
+    exports.hideDescription = hideDescription;
 });
