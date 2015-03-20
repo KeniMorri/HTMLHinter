@@ -30,13 +30,13 @@ define(function (require, exports, module) {
         html = editor.document.getText();
         error = parse(html);
 
+        clearAllErrors();
+
         if(error) {
             errorCache.message = error.message;
             errorCache.line = editor._codeMirror.getDoc().posFromIndex(error.cursor).line;
             MarkErrors.showButton(errorCache.line);
             MarkErrors.highlight(errorCache.line);
-        } else {
-            clearAllErrors();
         }
 
         BottomDisplayVar.update(html);
