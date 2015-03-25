@@ -42,9 +42,8 @@ define(function (require, exports, module) {
 
     //Function that adds a button on the gutter (on given line nubmer) next to the line numbers
     function showButton(line){
-        var errorMarker = document.createElement("div");
-        errorMarker.className = "errorButton errorText";
-        errorMarker.innerHTML = "!";
+        var errorMarker = document.createElement("i");
+        errorMarker.className = "fa fa-exclamation-circle fa-lg icon";
 
         getCodeMirror().setGutterMarker(line, "errors", errorMarker);
 

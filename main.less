@@ -1,32 +1,25 @@
+/*Font family for errorPanel*/
+@fontFamily: Helvetica, Arial, "Meiryo UI", "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+
 .errorHighlight {
     background-color: #EDC5C5;
 }
 
-.errorButton {
-    margin: 1px;
-    background-color: #FF0000;
-}
-
-.errorText {
-    padding-left: 3px;
-    padding-right: 3px;
-    font-weight: bold;
-    color: black;
-    border-radius: 100%;
-}
-
-.errorButton.errorText {
-    color: white;
+.icon {
+    color: #FF0000;
+    margin-left: 2px;
 }
 
 .errorPanel {
     padding-left: 20px;
     background-color: #EDC5C5;
     color: black;
+    font-family: @fontFamily;
 }
 
 .errorPanel h4 {
     font-weight: bold;
+    font-family: @fontFamily;
 }
 
 .tooltipsy {
@@ -38,10 +31,15 @@
 }
 
 .errors {
-    width: 15px;
+    width: 25px;
     cursor: pointer;
 }
 
 .gutterCursor {
     cursor: pointer;
+}
+
+.CodeMirror .CodeMirror-linenumber {
+    padding-right: 0px;
+    padding-left: 0px;
 }
