@@ -43,6 +43,8 @@ define(function(require) {
             error = {};
             error.message = render(errorMessages[result.error.type], result.error);
             error.cursor = result.error.cursor;
+            //error.start = result.error.openTag.start;
+            //error.end = result.error.openTag.end;
         }
 
         return error;

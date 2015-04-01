@@ -9,11 +9,11 @@ define(function (require, exports, module) {
         AppInit               = brackets.getModule("utils/AppInit"),
         EditorManager         = brackets.getModule("editor/EditorManager"),
         ExtensionUtils        = brackets.getModule("utils/ExtensionUtils"),
-        BottomDisplay         = require("BottomDisplayPanal"),
         MarkErrors            = require("errorDisplay"),
         parse                 = require("./parser"),
         showingDescription,
-        BottomDisplayVar,
+        errorButton,
+        defaultFont,
         errorCache = {};
 
     ExtensionUtils.loadStyleSheet(module, "main.less");
@@ -22,6 +22,7 @@ define(function (require, exports, module) {
         var editor = EditorManager.getActiveEditor();
         var error;
         var html;
+        var errorButton;
 
         if(!editor || editor.document.getLanguage().getName() !== "HTML") {
             return;
@@ -35,11 +36,8 @@ define(function (require, exports, module) {
         if(error) {
             errorCache.message = error.message;
             errorCache.line = editor._codeMirror.getDoc().posFromIndex(error.cursor).line;
-            MarkErrors.showButton(errorCache.line);
-            MarkErrors.highlight(errorCache.line);
+            errorButton = MarkErrors.scafoldHinter(error.cursor, error.end, errorCache);
         }
-
-        BottomDisplayVar.update(html);
     }
 
     //Function that clears all errors
@@ -60,7 +58,6 @@ define(function (require, exports, module) {
         } else {
             MarkErrors.hideDescription();
         }
-
         showingDescription = !showingDescription;
     };
 
@@ -71,41 +68,35 @@ define(function (require, exports, module) {
         }
     };
 
+    var fontChange = function(editor) {
+        var currentEditor = EditorManager.getActiveEditor();
+        if(currentEditor) {
+            if(defaultFont != currentEditor._codeMirror.defaultTextHeight()) {
+                defaultFont = currentEditor._codeMirror.defaultTextHeight();
+                main();
+            }
+        }
+    }
+
     //Switching editors
     var activeEditorChangeHandler = function ($event, focusedEditor, lostEditor) {
         if (lostEditor) {
-            lostEditor._codeMirror.off("gutterClick", toggleErrorDescription);
             lostEditor._codeMirror.off("change", documentChanged);
         }
-
         if (focusedEditor) {
-            focusedEditor._codeMirror.on("gutterClick", toggleErrorDescription);
             focusedEditor._codeMirror.on("change", documentChanged);
         }
-
     };
 
-    //Function that shows panel
-    function showpan() {
-        BottomDisplayVar.panelRender(true);
-    }
-    // First, register a command - a UI-less object associating an id to a handler
-    var MY_COMMAND_ID = "Show_Slowparse_Panel"; // package-style naming to avoid collisions
-    CommandManager.register("Show Parsed HTML Panel", MY_COMMAND_ID, showpan);
-
-    // Then create a menu item bound to the command
-    // The label of the menu item is the name we gave the command (see above)
-    var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-    menu.addMenuItem(MY_COMMAND_ID,  "Ctrl-Alt-U");
-
     AppInit.appReady(function(){
-        BottomDisplayVar = new BottomDisplay();
         EditorManager.on("activeEditorChange", activeEditorChangeHandler);
 
         var currentEditor = EditorManager.getActiveEditor();
-        MarkErrors.initGutter();
+        MarkErrors.initHinter();
         currentEditor._codeMirror.on("change", documentChanged);
-        currentEditor._codeMirror.on("gutterClick", toggleErrorDescription);
+        defaultFont = currentEditor._codeMirror.defaultTextHeight();
+        currentEditor._codeMirror.on("update", fontChange);
+        errorButton = null;
     });
 });
 
