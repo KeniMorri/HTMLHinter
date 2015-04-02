@@ -9,44 +9,34 @@ define(function (require, exports, module) {
         lineWidgetHTML = require("text!inlineWidget.html"),
         currentErrorWidget;
     var errorToggle;
-    var errorPostion;
-    
-    var lastGutterPointer;
-    
     var isShowingDescription;
     var errorObject;
     
-
     ExtensionUtils.loadStyleSheet(module, "main.less");
     require("tooltipsy.source");
 
-    function getActiveEditor() {
-        return EditorManager.getActiveEditor();
-    }
-
-    function getCodeMirror() {
-        return getActiveEditor()._codeMirror;
-    }
-
-    function initHinter() {
-        //getCodeMirror().setOption("gutters", ["errors"]);
-        errorToggle = document.createElement("div");
-        errorPostion = null;
-        lastGutterPointer = null;
+    //Publicly available function to remove all errors from brackets
+    function cleanUp(line) {
+        removeButton();
+        removeHighlight(line);
+        hideDescription();
         isShowingDescription = false;
-        errorObject = null;
     }
 
+    //Publicly available function used to display error markings
     function scafoldHinter(errorStart, errorEnd, errorObj) {
         //Setup neccessary variables
-        errorPostion = getCodeMirror().posFromIndex(errorStart);
+        errorToggle = document.createElement("div");
+        isShowingDescription = false;
         errorObject = errorObj;
+
         //Spawn button
         showButton();
-        //Setup Gutter Highlight
-        highlight(errorPostion.line);
-        //Setup Widght with error
-        //showDescription(errorObj);
+
+        //Setup Highlight
+        highlight();
+
+        //Apply on click method to the errorToggle to display the inLineErrorWidget
         errorToggle.onclick = function() {
             if(!isShowingDescription) {
                 showDescription(errorObj);
@@ -55,23 +45,29 @@ define(function (require, exports, module) {
                 hideDescription();
             }
             isShowingDescription = !isShowingDescription;
-        }
+        };
         return $(errorToggle);
     }
 
-    function cleanup() {
-        removeButton();
-        removeHighlight();
-        isShowingDescription = false;
+    //Returns the current editor we reside in
+    function getActiveEditor() {
+        return EditorManager.getActiveEditor();
     }
 
+    //Returns the current instance of codeMirror
+    function getCodeMirror() {
+        return getActiveEditor()._codeMirror;
+    }
+
+    //Highlights the line in which the error is present
     function highlight() {
-        if(!errorPostion.line) {
+        if(!errorObject.line) {
             return;
         }
-        getCodeMirror().getDoc().addLineClass(errorPostion.line, "background", "errorHighlight");
+        getCodeMirror().getDoc().addLineClass(errorObject.line, "background", "errorHighlight");
     }
 
+    //Removes highlight from line in which error was present
     function removeHighlight(line) {
         if(!line) {
             return;
@@ -79,11 +75,9 @@ define(function (require, exports, module) {
         getCodeMirror().getDoc().removeLineClass(line, "background", "errorHighlight");
     }
 
-
-
     //Function that adds a button on the gutter (on given line nubmer) next to the line numbers
     function showButton(){
-        getCodeMirror().addWidget(errorPostion, errorToggle, false);
+        getCodeMirror().addWidget(errorObject, errorToggle, false);
         $(errorToggle).attr("class", "hint-marker-positioning hint-marker-error").removeClass("hidden");
         //Show tooltips message
         $(".hint-marker-positioning").tooltipsy({content : "Click error icon for details", alignTo: "cursor", offset: [10, -10]});
@@ -91,10 +85,12 @@ define(function (require, exports, module) {
 
     // Function that removes gutter button
     function removeButton(){
+        if(!errorToggle) {
+            return;
+        }
         if (errorToggle.parentNode) {
           $(errorToggle).remove();
         }
-        //getCodeMirror().clearGutter("hint-marker-positioning");
 
         //Destroy tooltips instance
         var tooltips = $(".hint-marker-positioning").data("tooltipsy");
@@ -104,6 +100,7 @@ define(function (require, exports, module) {
         isShowingDescription = false;
     }
 
+    //Creates the description, and then displays it
     function showDescription(error) {
         var description = document.createElement("div");
         description.className = "errorPanel";
@@ -113,6 +110,7 @@ define(function (require, exports, module) {
         currentErrorWidget = getCodeMirror().addLineWidget(error.line, description, options);
     }
 
+    //Destroys the description
     function hideDescription() {
         if(!currentErrorWidget) {
             return;
@@ -121,11 +119,6 @@ define(function (require, exports, module) {
         currentErrorWidget = null;
     }
 
-    exports.initHinter = initHinter;
+    exports.cleanUp = cleanUp;
     exports.scafoldHinter = scafoldHinter;
-    exports.removeButton = removeButton;
-    exports.highlight = highlight;
-    exports.removeHighlight = removeHighlight;
-    exports.showDescription = showDescription;
-    exports.hideDescription = hideDescription;
 });
