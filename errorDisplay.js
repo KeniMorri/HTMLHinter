@@ -7,10 +7,9 @@ define(function (require, exports, module) {
     var EditorManager  = brackets.getModule("editor/EditorManager"),
         ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
         lineWidgetHTML = require("text!inlineWidget.html"),
-        currentErrorWidget;
-    var errorToggle;
-    var isShowingDescription;
-    var errorObject;
+        currentErrorWidget,
+        errorToggle,
+        isShowingDescription;
     
     ExtensionUtils.loadStyleSheet(module, "main.less");
     require("tooltipsy.source");
@@ -28,13 +27,10 @@ define(function (require, exports, module) {
         //Setup neccessary variables
         errorToggle = document.createElement("div");
         isShowingDescription = false;
-        errorObject = errorObj;
 
-        //Spawn button
-        showButton();
+        showButton(errorObj);
 
-        //Setup Highlight
-        highlight();
+        highlight(errorObj);
 
         //Apply on click method to the errorToggle to display the inLineErrorWidget
         errorToggle.onclick = function() {
@@ -60,7 +56,7 @@ define(function (require, exports, module) {
     }
 
     //Highlights the line in which the error is present
-    function highlight() {
+    function highlight(errorObject) {
         if(!errorObject.line) {
             return;
         }
@@ -76,7 +72,7 @@ define(function (require, exports, module) {
     }
 
     //Function that adds a button on the gutter (on given line nubmer) next to the line numbers
-    function showButton(){
+    function showButton(errorObject){
         getCodeMirror().addWidget(errorObject, errorToggle, false);
         $(errorToggle).attr("class", "hint-marker-positioning hint-marker-error").removeClass("hidden");
         //Show tooltips message
@@ -89,7 +85,7 @@ define(function (require, exports, module) {
             return;
         }
         if (errorToggle.parentNode) {
-          $(errorToggle).remove();
+            $(errorToggle).remove();
         }
 
         //Destroy tooltips instance

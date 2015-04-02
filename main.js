@@ -36,7 +36,6 @@ define(function (require, exports, module) {
         }
     }
 
-    //Function that clears all errors
     function clearAllErrors(){
         MarkErrors.cleanUp(errorCache.line);
         errorCache = {};
