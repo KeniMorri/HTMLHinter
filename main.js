@@ -4,17 +4,14 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var CommandManager        = brackets.getModule("command/CommandManager"),
-        Menus                 = brackets.getModule("command/Menus"),
-        AppInit               = brackets.getModule("utils/AppInit"),
+    var AppInit               = brackets.getModule("utils/AppInit"),
         EditorManager         = brackets.getModule("editor/EditorManager"),
         ExtensionUtils        = brackets.getModule("utils/ExtensionUtils"),
-        BottomDisplay         = require("BottomDisplayPanal"),
         MarkErrors            = require("errorDisplay"),
         parse                 = require("./parser"),
-        showingDescription,
-        BottomDisplayVar,
+        defaultFont,
         errorCache = {};
+
 
     ExtensionUtils.loadStyleSheet(module, "main.less");
 
@@ -35,34 +32,14 @@ define(function (require, exports, module) {
         if(error) {
             errorCache.message = error.message;
             errorCache.line = editor._codeMirror.getDoc().posFromIndex(error.cursor).line;
-            MarkErrors.showButton(errorCache.line);
-            MarkErrors.highlight(errorCache.line);
+            MarkErrors.scafoldHinter(error.cursor, error.end, errorCache);
         }
-
-        BottomDisplayVar.update(html);
     }
 
-    //Function that clears all errors
     function clearAllErrors(){
-        MarkErrors.removeHighlight(errorCache.line);
+        MarkErrors.cleanUp(errorCache.line);
         errorCache = {};
-        MarkErrors.removeButton();
-        MarkErrors.hideDescription();
     }
-
-    var toggleErrorDescription = function(editor, line){
-        if(errorCache.line !== line) {
-            return;
-        }
-
-        if(!showingDescription) {
-            MarkErrors.showDescription(errorCache);
-        } else {
-            MarkErrors.hideDescription();
-        }
-
-        showingDescription = !showingDescription;
-    };
 
     //Document changed event handler
     var documentChanged = function (editor, object) {
@@ -71,41 +48,35 @@ define(function (require, exports, module) {
         }
     };
 
+    //Detects font change event
+    var fontChange = function(editor) {
+        if(editor) {
+            if(defaultFont !== editor.defaultTextHeight()) {
+                defaultFont = editor.defaultTextHeight();
+                main();
+            }
+        }
+    };
+
     //Switching editors
     var activeEditorChangeHandler = function ($event, focusedEditor, lostEditor) {
         if (lostEditor) {
-            lostEditor._codeMirror.off("gutterClick", toggleErrorDescription);
             lostEditor._codeMirror.off("change", documentChanged);
+            lostEditor._codeMirror.off("update", fontChange);
         }
-
         if (focusedEditor) {
-            focusedEditor._codeMirror.on("gutterClick", toggleErrorDescription);
             focusedEditor._codeMirror.on("change", documentChanged);
+            focusedEditor._codeMirror.on("update", fontChange);
         }
-
     };
 
-    //Function that shows panel
-    function showpan() {
-        BottomDisplayVar.panelRender(true);
-    }
-    // First, register a command - a UI-less object associating an id to a handler
-    var MY_COMMAND_ID = "Show_Slowparse_Panel"; // package-style naming to avoid collisions
-    CommandManager.register("Show Parsed HTML Panel", MY_COMMAND_ID, showpan);
-
-    // Then create a menu item bound to the command
-    // The label of the menu item is the name we gave the command (see above)
-    var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-    menu.addMenuItem(MY_COMMAND_ID,  "Ctrl-Alt-U");
-
     AppInit.appReady(function(){
-        BottomDisplayVar = new BottomDisplay();
         EditorManager.on("activeEditorChange", activeEditorChangeHandler);
 
         var currentEditor = EditorManager.getActiveEditor();
-        MarkErrors.initGutter();
         currentEditor._codeMirror.on("change", documentChanged);
-        currentEditor._codeMirror.on("gutterClick", toggleErrorDescription);
+        defaultFont = currentEditor._codeMirror.defaultTextHeight();
+        currentEditor._codeMirror.on("update", fontChange);
     });
 });
 
