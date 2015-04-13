@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     var AppInit               = brackets.getModule("utils/AppInit"),
         EditorManager         = brackets.getModule("editor/EditorManager"),
         ExtensionUtils        = brackets.getModule("utils/ExtensionUtils"),
+        MainViewManager       = brackets.getModule("view/MainViewManager"),
         MarkErrors            = require("errorDisplay"),
         parse                 = require("./parser"),
         defaultFont,
@@ -77,6 +78,7 @@ define(function (require, exports, module) {
         currentEditor._codeMirror.on("change", documentChanged);
         defaultFont = currentEditor._codeMirror.defaultTextHeight();
         currentEditor._codeMirror.on("update", fontChange);
+        MainViewManager.on("currentFileChange", documentChanged);
     });
 });
 
